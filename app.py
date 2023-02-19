@@ -1,48 +1,70 @@
-from flask import Flask, redirect, url_for, render_template, request, session, flash
+from flask import Flask, redirect, url_for, render_template, request, session, flash, request
 import datetime as dt
 import requests
 
 app = Flask(__name__)
 
-#variables
+temp_fahrenheit_rounded = 0
+feels_like_fahrenheit_rounded = 0
+wind_speed = 0
+humidity = 0
+description = "None"
 
-CityVar = "London"
 
-BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
-API_KEY = open('api_key.txt', 'r').read()
-CITY = CityVar
-
-def kelvin_to_celsius_fahrenheit(kelvin):
-    celsius = kelvin - 273.15
-    fahrenheit = celsius * (9/5) + 32
-    return celsius, fahrenheit
-
-url = BASE_URL + "appid=" + API_KEY + "&q=" + CITY
-response = requests.get(url).json()
-
-temp_kelvin = response['main']['temp']
-temp_celsius, temp_fahrenheit = kelvin_to_celsius_fahrenheit(temp_kelvin)
-feels_like_kelvin = response['main']['feels_like']
-feels_like_celsius, feels_like_fahrenheit = kelvin_to_celsius_fahrenheit(feels_like_kelvin)
-wind_speed = response['wind']
-humidity = response['main']['humidity']
-description = response['weather'][0]['description']
-sunrise_time = dt.datetime.utcfromtimestamp(response['sys']['sunrise'] + response['timezone'])
-sunset_time = dt.datetime.utcfromtimestamp(response['sys']['sunset'] + response['timezone'])
-
-temp_fahrenheit_rounded = round(int(temp_fahrenheit))
-temp_celsius_rounded = round(int(temp_celsius))
-feels_like_fahrenheit_rounded = round(int(feels_like_fahrenheit))
-feels_like_celsius_rounded = round(int(feels_like_celsius))
 
 @app.route('/')
-def hello_world():  # put application's code here
+def home():  # put application's code here
     return render_template("index.html")
 
+@app.route('/choose_city.html')
+def choose_city():
+    return render_template("choose_city.html")
 
+@app.route("/update", methods=["POST"])
+def update_string():
+    global CITY
+    CITY = request.form["user_input"]
+    cityList = CITY.split(',')
+    url2 = "http://api.openweathermap.org/geo/1.0/zip?zip=" + cityList[0] + "," + cityList[1] + "&appid=" + open('api_key.txt', 'r').read()
+    response2 = requests.get(url2).json()
+    cityList = str(response2).split("'")
+    CITY = cityList[7]
+    lat = str(response2).split("'")
+    lat = lat[10].split(":")
+    lat = lat[1].split(",")
+    lat = lat[0].split()
+    lat = lat[0]
+    print(lat)
+    lon = str(response2).split("'")
+    lon = lon[12].split()
+    lon = lon[1].split(",")
+    lon = lon[0]
+    print(lon)
+
+    f = open("templates/passParameters.txt", "w")
+    f.write(CITY+"/"+lat+"/"+lon)
+    f.close()
+    import weather
+    f = open("templates/passParameters.txt", "r")
+    weatherList = f.read().split('/')
+    temp_fahrenheit_rounded = weatherList[0]
+    feels_like_fahrenheit_rounded = weatherList[1]
+    wind_speed = weatherList[2]
+    humidity = weatherList[3]
+    description = weatherList[4]
+    recommendation = weatherList[5]
+    aqi = weatherList[6]
+    aqi_recommendation = weatherList[7]
+    return render_template("weather.html", temp = temp_fahrenheit_rounded, feelslike = feels_like_fahrenheit_rounded, wind = wind_speed, hum = humidity,  desc = description, rec = recommendation, aqi = aqi, aqi_rec = aqi_recommendation)
+
+
+"""
 @app.route("/weather.html")
 def weather():
-    return render_template("weather.html", temp = temp_fahrenheit_rounded, feelslike = feels_like_fahrenheit, wind = wind_speed, hum = humidity,  desc = description)
+    print("hi 2")
+    return render_template("weather.html", temp = temp_fahrenheit_rounded, feelslike = feels_like_fahrenheit_rounded, wind = wind_speed, hum = humidity,  desc = description)
+
+"""
 
 
 

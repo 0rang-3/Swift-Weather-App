@@ -1,11 +1,16 @@
-# api key e7e7b64e92164cde582d416840ef15f6
-import datetime as dt
 import requests
+import datetime as dt
+
+f = open("templates/passParameters.txt", "r")
+cityInfoList = f.read()
+cityInfo = str(cityInfoList).split("/")
+CITY = cityInfo[0]
+lat = cityInfo[1]
+lon = cityInfo[2]
+
 
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
 API_KEY = open('api_key.txt', 'r').read()
-CITY = "Sunnyvale"
-
 def kelvin_to_celsius_fahrenheit(kelvin):
     celsius = kelvin - 273.15
     fahrenheit = celsius * (9/5) + 32
@@ -29,13 +34,49 @@ temp_celsius_rounded = round(int(temp_celsius))
 feels_like_fahrenheit_rounded = round(int(feels_like_fahrenheit))
 feels_like_celsius_rounded = round(int(feels_like_celsius))
 
+#Less than 25 degrees. Light to medium coat: 25 to 44 degrees. Fleece: 45 to 64 degrees
+Deg45_64 = "We recommend that you wear a light jacket when going out in this weather. "
+Deg25_44 = "We recommend that you wear a heavy jacket when going out in this weather. "
+Deg25bel = "We recommend wearing a winter jacket when going out in this weather."
+dont_wear_jacket = "A jacket is not recommended when going out in this weather. "
+recommendation = "0"
+if(feels_like_fahrenheit_rounded > 45 and feels_like_fahrenheit_rounded < 64 ):
+    recommendation = "We recommend that you wear a light jacket when going out in this weather. "
+elif(feels_like_fahrenheit_rounded > 25 and feels_like_fahrenheit_rounded < 44 ):
+    recommendation = "We recommend that you wear a heavy jacket when going out in this weather."
+elif(feels_like_fahrenheit_rounded < 25):
+    recommendation = "We recommend wearing a winter jacket when going out in this weather."
+elif(feels_like_fahrenheit_rounded > 64):
+    recommendation = "A jacket is not recommended when going out in this weather. "
+
+#airqualityapi
+BASE2_URL = "http://api.openweathermap.org/data/2.5/air_pollution?"
+url2 = BASE2_URL + "lat=" + lat + "&lon=" + lon + "&appid=" + API_KEY
+response2 = requests.get(url2).json()
+print(response2)
+
+aqi = str(response2).split("'")
+print(aqi[12])
+aqi = aqi[12].split()
+aqi = aqi[1].split("}")
+aqi = int(aqi[0])
+
+if(aqi >= 0 and aqi <= 50):
+    aqi_recommendation = "Air quality is satisfactory, and air pollution poses little or no risk."
+elif(aqi >= 51 and aqi <= 100):
+    aqi_recommendation = "Air quality is acceptable. However, there may be a risk for some people, particularly those who are unusually sensitive to air pollution."
+elif(aqi >= 101 and aqi <= 150):
+    aqi_recommendation = "Members of sensitive groups may experience health effects. The general public is less likely to be affected."
+elif(aqi >= 151 and aqi <= 200):
+    aqi_recommendation = "Some members of the general public may experience health effects; members of sensitive groups may experience more serious health effects."
+elif(aqi >= 201 or aqi <= 300):
+    aqi_recommendation = "Health alert: The risk of health effects is increased for everyone."
+elif(aqi >= 301):
+    aqi_recommendation = "Health warning of emergency conditions: everyone is more likely to be affected."
 
 
 
-print(f"Temperature in {CITY}: {temp_celsius_rounded:.2f}ºC or {temp_fahrenheit_rounded}ºF")
-print(f"Temperature in {CITY}: feels like {feels_like_celsius_rounded:.2f}ºC or {feels_like_fahrenheit_rounded}ºF")
-print(f"Humidity in {CITY}: {humidity}%")
-print(f"Wind Speed in {CITY}: {wind_speed}m/s")
-print(f"General Weather in {CITY}: {description}")
-print(f"Sun rises in {CITY} at {sunrise_time} local time.")
-print(f"Sun sets in {CITY} at {sunset_time} local time.")
+
+f = open("templates/passParameters.txt", "w+")
+f.write(str(temp_fahrenheit_rounded)+"/"+str(feels_like_fahrenheit_rounded)+"/"+str(wind_speed)+"/"+str(humidity)+"/"+description+"/"+recommendation+"/"+str(aqi)+"/"+aqi_recommendation+"/")
+f.close()
