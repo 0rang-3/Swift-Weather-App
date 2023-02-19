@@ -59,7 +59,7 @@ def update_string(): #HTML Form to Choose City
     aqi_recommendation = weatherList[8]
 
     #Render weather.html
-    return render_template("weather.html", temp = temp_fahrenheit_rounded, feelslike = feels_like_fahrenheit_rounded, speed = speed_mph, dir = direction, hum = humidity,  desc = description, rec = recommendation, aqi = aqi, aqi_rec = aqi_recommendation)
+    return render_template("weather.html", temp = temp_fahrenheit_rounded, feelslike = feels_like_fahrenheit_rounded, speed = speed_mph, dir = direction, hum = humidity,  desc = description, rec = recommendation, aqi = aqi, aqi_rec = aqi_recommendation, city = CITY)
 
 if __name__ == '__main__':
     app.run(debug=True)
